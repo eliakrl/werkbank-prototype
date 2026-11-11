@@ -1,0 +1,465 @@
+<title>Werkbank Prototype</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,500..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: app shell. Workwear-blue sidebar of four tools (Reception, Jobs, Hub, Insights) beside a working canvas on cool workshop grey. */
+:root{
+  --bg:#eceff2; --surface:#fbfcfd; --sunk:#e2e6ea; --ink:#15202b; --muted:#566271; --line:#d3d9df;
+  --navy:#1e3a5f; --on-navy:#ffffff; --navy-soft:#dde6f1; --brass:#a8701a; --brass-soft:#f4e7cf;
+  --good:#2d7a4c; --good-soft:#dcefe3; --warn:#b45309; --warn-soft:#fbe8d3; --bad:#b42318; --bad-soft:#f8dcd9;
+  --f-display:"Archivo","Arial Narrow",Arial,sans-serif; --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --r:6px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f151c; --surface:#17202a; --sunk:#111922; --ink:#e5eaef; --muted:#9aa6b3; --line:#2a3644;
+  --navy:#8fb3e0; --on-navy:#0f151c; --navy-soft:#1d2d42; --brass:#e0a54a; --brass-soft:#3a2c14;
+  --good:#5cc58a; --good-soft:#163323; --warn:#f0a14a; --warn-soft:#3a2711; --bad:#f07167; --bad-soft:#3d1a18; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f151c; --surface:#17202a; --sunk:#111922; --ink:#e5eaef; --muted:#9aa6b3; --line:#2a3644;
+  --navy:#8fb3e0; --on-navy:#0f151c; --navy-soft:#1d2d42; --brass:#e0a54a; --brass-soft:#3a2c14;
+  --good:#5cc58a; --good-soft:#163323; --warn:#f0a14a; --warn-soft:#3a2711; --bad:#f07167; --bad-soft:#3d1a18; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.5}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.app{display:grid;grid-template-columns:232px 1fr;min-height:100%}
+/* sidebar */
+.side{background:var(--surface);border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:22px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;padding:0 6px}
+.brand svg{flex:none}
+.brand b{font-family:var(--f-display);font-stretch:85%;font-weight:800;font-size:22px;letter-spacing:.01em}
+.biz{padding:10px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg)}
+.biz .n{font-weight:600}
+.biz .m{color:var(--muted);font-size:12px}
+nav{display:flex;flex-direction:column;gap:2px}
+nav a{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;border-radius:var(--r);color:var(--ink);text-decoration:none;font-weight:500}
+nav a:hover{background:var(--sunk)}
+nav a[aria-current="page"]{background:var(--navy);color:var(--on-navy)}
+nav a .tag{font-family:var(--f-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;opacity:.75}
+nav a .lock{font-size:11px}
+.tier{margin-top:auto;display:flex;flex-direction:column;gap:8px}
+.lbl{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.seg button{border:0;background:var(--surface);padding:8px 6px;text-align:left;line-height:1.2}
+.seg button small{display:block;color:var(--muted);font-family:var(--f-mono);font-size:11px}
+.seg button[aria-pressed="true"]{background:var(--navy-soft)}
+.seg button[aria-pressed="true"] b{color:var(--navy)}
+.note{font-size:12px;color:var(--muted)}
+/* main */
+main{min-width:0;padding-block:24px 48px;padding-left:max(28px,env(safe-area-inset-left,0px));padding-right:max(28px,env(safe-area-inset-right,0px))}
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+h1{font-family:var(--f-display);font-stretch:88%;font-weight:750;font-size:30px;line-height:1.1;margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin:4px 0 0;max-width:62ch}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:500;background:var(--sunk);color:var(--muted);white-space:nowrap}
+.pill.demo{background:var(--brass-soft);color:var(--brass)}
+.pill.good{background:var(--good-soft);color:var(--good)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.navy{background:var(--navy-soft);color:var(--navy)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.ph{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.ph h2{font-family:var(--f-display);font-stretch:92%;font-size:16px;font-weight:700;margin:0}
+.pb{padding:16px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:8px 14px;font-weight:500}
+.btn:hover{background:var(--sunk)}
+.btn.primary{background:var(--navy);color:var(--on-navy);border-color:var(--navy)}
+.btn.primary:hover{filter:brightness(1.1)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.sm{padding:5px 10px;font-size:13px}
+.grid2{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start}
+.num{font-variant-numeric:tabular-nums}
+.mono{font-family:var(--f-mono)}
+/* reception */
+.caller{display:flex;align-items:center;gap:14px;padding:16px;border-bottom:1px solid var(--line)}
+.ring{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--navy-soft);color:var(--navy);flex:none}
+.live .ring{animation:pulse 1.4s ease-out infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--navy) 45%,transparent)}100%{box-shadow:0 0 0 14px transparent}}
+.caller .who{flex:1;min-width:0}
+.caller .who b{display:block}
+.caller .who span{color:var(--muted);font-size:13px}
+.transcript{padding:16px;display:flex;flex-direction:column;gap:12px;min-height:340px;max-height:460px;overflow-y:auto;background:var(--bg)}
+.msg{max-width:86%;padding:9px 12px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line);animation:in .25s ease-out}
+.msg.ai{align-self:flex-start;border-left:3px solid var(--navy)}
+.msg.cust{align-self:flex-end}
+.msg .who{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.msg .de{display:block}
+.msg .en{display:block;color:var(--muted);font-size:12.5px;font-style:italic}
+@keyframes in{from{opacity:.2;transform:translateY(4px)}to{opacity:1;transform:none}}
+.empty{color:var(--muted);text-align:center;margin:auto;max-width:36ch}
+.fields{display:flex;flex-direction:column}
+.field{display:grid;grid-template-columns:118px 1fr;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);align-items:baseline}
+.field:last-child{border-bottom:0}
+.field dt{color:var(--muted);font-size:13px}
+.field dd{margin:0;font-weight:500;min-width:0}
+.field dd.wait{color:var(--muted);font-weight:400}
+.field.just dd{animation:flash 1.2s ease-out}
+@keyframes flash{0%{background:var(--brass-soft)}100%{background:transparent}}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border-top:1px solid var(--line)}
+.stats div{background:var(--surface);padding:12px 16px}
+.stats b{font-family:var(--f-display);font-size:22px;font-weight:700;display:block}
+.stats span{font-size:12px;color:var(--muted)}
+/* jobs */
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:13px}
+.chip[aria-pressed="true"]{background:var(--navy);color:var(--on-navy);border-color:var(--navy)}
+.board{display:grid;grid-template-columns:repeat(5,minmax(180px,1fr));gap:12px;overflow-x:auto;padding-bottom:6px}
+.col{display:flex;flex-direction:column;gap:8px;min-width:0}
+.colh{display:flex;justify-content:space-between;align-items:baseline;padding:0 2px}
+.colh b{font-family:var(--f-display);font-stretch:90%;font-size:14px}
+.colh span{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:11px 12px;display:flex;flex-direction:column;gap:6px}
+.card.new-flash{animation:flash 2s ease-out;border-color:var(--brass)}
+.card .t{font-weight:600;line-height:1.3}
+.card .c{color:var(--muted);font-size:13px}
+.card .row{display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap}
+.src{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--navy)}
+.colempty{border:1px dashed var(--line);border-radius:var(--r);padding:14px;color:var(--muted);font-size:13px;text-align:center}
+/* hub */
+.hub{display:grid;grid-template-columns:260px minmax(0,1fr);gap:16px;align-items:start}
+.clist{display:flex;flex-direction:column}
+.clist button{border:0;border-bottom:1px solid var(--line);background:none;text-align:left;padding:11px 16px;display:flex;flex-direction:column;gap:1px}
+.clist button:last-child{border-bottom:0}
+.clist button:hover{background:var(--sunk)}
+.clist button[aria-current="true"]{background:var(--navy-soft)}
+.clist small{color:var(--muted)}
+.timeline{list-style:none;margin:0;padding:0}
+.timeline li{display:grid;grid-template-columns:92px 22px 1fr auto;gap:10px;align-items:start;padding:10px 0}
+.timeline .d{color:var(--muted);font-size:12.5px;font-family:var(--f-mono);padding-top:2px}
+.dot{width:12px;height:12px;border-radius:50%;margin-top:5px;border:2px solid var(--navy);background:var(--surface);justify-self:center;position:relative}
+.timeline li:not(:last-child) .dot::after{content:"";position:absolute;left:50%;top:12px;width:2px;height:44px;background:var(--line);transform:translateX(-50%)}
+.timeline .k{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.timeline .x{font-weight:500}
+.drop{border:1.5px dashed var(--line);border-radius:var(--r);padding:18px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.drop.over{border-color:var(--navy);background:var(--navy-soft)}
+.thumb{width:84px;height:104px;border-radius:4px;background:var(--sunk);border:1px solid var(--line);object-fit:cover;flex:none}
+.ocr{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:13px;margin:0}
+.ocr dt{color:var(--muted)}
+.ocr dd{margin:0;font-weight:500}
+/* insights */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.kpi .v{font-family:var(--f-display);font-stretch:90%;font-weight:750;font-size:28px;line-height:1.1;margin:4px 0}
+.kpi .d{font-size:12.5px}
+.up-bad{color:var(--bad)} .up-good{color:var(--good)}
+.chart svg{width:100%;height:auto;display:block}
+.legend{display:flex;gap:16px;font-size:12.5px;color:var(--muted);flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.advice{display:flex;flex-direction:column}
+.adv{display:grid;grid-template-columns:4px 1fr;border-bottom:1px solid var(--line)}
+.adv:last-child{border-bottom:0}
+.adv .s{background:var(--warn)}
+.adv.bad .s{background:var(--bad)} .adv.info .s{background:var(--navy)} .adv.done .s{background:var(--good)}
+.adv .b{padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.adv h3{margin:0;font-size:15px;font-weight:600;line-height:1.35}
+.adv p{margin:0;color:var(--muted);font-size:13.5px;max-width:68ch}
+.adv .a{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px}
+.ask{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--line)}
+.ask input{flex:1;min-width:0;border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;background:var(--bg);color:var(--ink);font:inherit}
+.answer{padding:0 16px 14px;color:var(--ink);font-size:13.5px}
+.answer:empty{display:none}
+/* locked */
+.locked{max-width:560px;margin:40px auto;text-align:center;padding:32px}
+.locked h2{font-family:var(--f-display);font-stretch:90%;font-size:22px;margin:10px 0 6px}
+.locked p{color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:var(--r);font-size:13.5px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:calc(100% - 32px)}
+.toast.on{opacity:1}
+@media (max-width:1100px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.grid2{grid-template-columns:1fr}}
+@media (max-width:820px){
+  .app{grid-template-columns:1fr}
+  .side{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;gap:12px;padding-block:12px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));border-right:0;border-bottom:1px solid var(--line)}
+  .biz{display:none}
+  nav{flex-direction:row;overflow-x:auto;width:100%;order:3}
+  nav a{white-space:nowrap}
+  nav a .tag{display:none}
+  .tier{margin:0 0 0 auto;flex-direction:row;align-items:center}
+  .tier .lbl,.tier .note{display:none}
+  main{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .hub{grid-template-columns:1fr}
+  .field{grid-template-columns:96px 1fr}
+  .timeline li{grid-template-columns:76px 18px 1fr;}
+  .timeline li .amt{grid-column:3}
+}
+@media (max-width:480px){.kpis{grid-template-columns:1fr}.stats{grid-template-columns:1fr}.brand b{font-size:19px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="2" y="9" width="26" height="5" rx="1" fill="var(--navy)"/><rect x="5" y="14" width="3" height="13" fill="var(--navy)"/><rect x="22" y="14" width="3" height="13" fill="var(--navy)"/><rect x="8" y="20" width="14" height="2" fill="var(--navy)"/><rect x="11" y="3" width="8" height="6" rx="1" fill="var(--brass)"/></svg>
+      <b>Werkbank</b>
+    </div>
+    <div class="biz"><div class="n">Elektro Huber GmbH</div><div class="m">Meister Thomas Huber · 6 staff · München-Giesing</div></div>
+    <nav id="nav" aria-label="Werkbank tools">
+      <a href="#reception" data-v="reception">Reception <span class="tag">Phase 1</span></a>
+      <a href="#jobs" data-v="jobs">Job inbox <span class="tag">Phase 1</span></a>
+      <a href="#hub" data-v="hub">Hub <span class="tag" data-p2>Phase 2</span></a>
+      <a href="#insights" data-v="insights">Insights <span class="tag" data-p2>Phase 2</span></a>
+    </nav>
+    <div class="tier">
+      <span class="lbl">Plan</span>
+      <div class="seg" role="group" aria-label="Plan">
+        <button id="t-basis" aria-pressed="false"><b>Basis</b><small>€149/mo</small></button>
+        <button id="t-komplett" aria-pressed="true"><b>Komplett</b><small>€299/mo</small></button>
+      </div>
+      <span class="note">Switch plans to see what each tier includes. Setup €990 one-off.</span>
+    </div>
+  </aside>
+  <main id="main"></main>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const $ = (s, el=document) => el.querySelector(s);
+const eur = n => '€' + n.toLocaleString('en-GB', {maximumFractionDigits:0});
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const STAGES = ['New','Quoted','Booked','Invoiced','Paid'];
+
+const state = {
+  tier: 'komplett',
+  view: 'reception',
+  call: {status:'idle', step:0, fields:{}, added:false},
+  filter: 'all',
+  customer: 'isar',
+  receipt: null,
+  doneAdvice: new Set(),
+  flashJob: null,
+};
+
+const jobs = [
+  {id:'J-1041', cust:'Familie Schneider', area:'Sendling', title:'Replace meter cabinet', src:'Call', stage:1, value:3400, date:'28 Oct'},
+  {id:'J-1042', cust:'Dr. Anna Berger', area:'Bogenhausen', title:'Wallbox installation, 11 kW', src:'Web form', stage:1, value:2900, date:'29 Oct'},
+  {id:'J-1047', cust:'Bäckerei Wimmer', area:'Giesing', title:'Check oven circuit, new RCD', src:'Email', stage:2, value:480, date:'6 Nov'},
+  {id:'J-1033', cust:'Hausverwaltung Isar GmbH', area:'Schwabing', title:'Stairwell lighting, 3 buildings', src:'Call', stage:3, value:1850, date:'20 Sep'},
+  {id:'J-1038', cust:'WEG Ungererstraße 40', area:'Schwabing', title:'Intercom repair', src:'Email', stage:3, value:1430, date:'7 Oct'},
+  {id:'J-1039', cust:'Café Lindwurm', area:'Isarvorstadt', title:'Repair pendant lighting', src:'WhatsApp', stage:3, value:920, date:'12 Oct'},
+  {id:'J-1030', cust:'Familie Schneider', area:'Sendling', title:'Outdoor sockets, garden', src:'Call', stage:4, value:640, date:'15 Sep'},
+  {id:'J-1049', cust:'Familie Öztürk', area:'Ramersdorf', title:'Kitchen socket not working', src:'Call', stage:0, value:null, date:'10 Nov'},
+];
+
+const customers = {
+  isar:{name:'Hausverwaltung Isar GmbH', meta:'Property manager · 3 buildings · customer since 2023', pay:'Pays in 45 days on average (terms: 14)', tone:'bad', docs:[
+    ['11 Sep','Call','Request: stairwell lights failing in 3 buildings','Werkbank AI answered at 07:42 while the team was on site'],
+    ['13 Sep','Quote','Q-2026-114 · LED stairwell lighting','€1,850'],
+    ['18 Sep','Job','Done by Kerem and Lukas, 9.5 h','3 photos'],
+    ['18 Sep','Receipt','Sonepar · LED panels, motion sensors','€612.40'],
+    ['20 Sep','Invoice','R-2026-201 · due 4 Oct','€1,850 · 38 days overdue'],
+  ]},
+  schneider:{name:'Familie Schneider', meta:'Private · Sendling · customer since 2021', pay:'Pays in 6 days on average', tone:'good', docs:[
+    ['2 Sep','Call','Outdoor sockets for the garden','Booked by Werkbank AI'],
+    ['15 Sep','Invoice','R-2026-188 · paid 21 Sep','€640'],
+    ['27 Oct','Call','Fuse box is old, wants a new meter cabinet','Werkbank AI answered at 18:10, after hours'],
+    ['28 Oct','Quote','Q-2026-131 · meter cabinet incl. Netzanmeldung SWM','€3,400 · no reply for 14 days'],
+  ]},
+  berger:{name:'Dr. Anna Berger', meta:'Private · Bogenhausen · new customer', pay:'No payment history yet', tone:'navy', docs:[
+    ['27 Oct','Web form','Wallbox for a new EV, garage with 3-phase supply','2 photos attached'],
+    ['29 Oct','Quote','Q-2026-133 · 11 kW wallbox, KfW-eligible','€2,900 · no reply for 13 days'],
+  ]},
+  lindwurm:{name:'Café Lindwurm', meta:'Café · Isarvorstadt · customer since 2024', pay:'Pays in 19 days on average', tone:'warn', docs:[
+    ['9 Oct','WhatsApp','Two pendant lights flicker in the guest room','Photo + voice note, transcribed'],
+    ['12 Oct','Job','Done by Lukas, 2 h','—'],
+    ['12 Oct','Invoice','R-2026-214 · due 26 Oct','€920 · 16 days overdue'],
+  ]},
+  wimmer:{name:'Bäckerei Wimmer', meta:'Bakery · Giesing · customer since 2019', pay:'Pays in 9 days on average', tone:'good', docs:[
+    ['4 Nov','Email','RCD trips when the second oven heats up','Forwarded to the job inbox automatically'],
+    ['6 Nov','Booking','Thu 13 Nov, 05:30 (before opening)','Confirmation sent by SMS'],
+  ]},
+};
+
+const script = [
+  {who:'ai', de:'Elektro Huber, hier ist die digitale Assistentin von Herrn Huber. Ich bin eine KI. Darf ich das Gespräch für Ihren Auftrag aufzeichnen?', en:'Elektro Huber, this is Mr Huber\'s digital assistant. I am an AI. May I record this call for your job?'},
+  {who:'cust', de:'Ja, passt. Grüß Gott, Maier hier, Katrin Maier.', en:'Yes, fine. Hello, Katrin Maier here.', set:{consent:'Given at 00:07 (§201 StGB)', name:'Katrin Maier'}},
+  {who:'ai', de:'Grüß Gott, Frau Maier. Worum geht\'s?', en:'Hello Ms Maier. What can we help with?'},
+  {who:'cust', de:'Bei uns fliegt dauernd die Sicherung raus, immer wenn Herd und Waschmaschine gleichzeitig laufen.', en:'Our fuse keeps tripping whenever the stove and the washing machine run at the same time.', set:{problem:'Circuit breaker trips when stove + washing machine run together'}},
+  {who:'ai', de:'Verstanden. Wie lautet die Adresse?', en:'Understood. What is the address?'},
+  {who:'cust', de:'Kellerstraße 12, in der Au, dritter Stock.', en:'Kellerstraße 12, in Au, third floor.', set:{address:'Kellerstraße 12, 3rd floor, 81667 München (Au)'}},
+  {who:'ai', de:'Riecht es verbrannt, oder ist irgendwo etwas warm geworden?', en:'Is there a burning smell, or has anything got warm?'},
+  {who:'cust', de:'Na, nix dergleichen.', en:'No, nothing like that.', set:{urgency:'Normal · safety questions passed'}},
+  {who:'ai', de:'Herr Huber hätte am Donnerstag zwischen 8 und 10 Uhr Zeit. Passt Ihnen das?', en:'Mr Huber is free on Thursday between 8 and 10. Does that suit you?'},
+  {who:'cust', de:'Ja, perfekt.', en:'Yes, perfect.', set:{slot:'Thu 12 Nov, 08:00–10:00 · in Thomas\'s calendar'}},
+  {who:'ai', de:'Ist eingetragen. Sie bekommen gleich eine SMS zur Bestätigung. Auf Wiederhören!', en:'Booked. You will get a text to confirm in a moment. Goodbye!', set:{summary:'Likely overloaded circuit; bring a 3-phase tester and spare B16 breakers'}},
+];
+const FIELDS = [['name','Caller'],['address','Address'],['problem','Problem'],['urgency','Urgency'],['slot','Appointment'],['consent','Recording consent'],['summary','Note for the Meister']];
+
+/* ---------- shell ---------- */
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('on'),2600)}
+function setTier(t){state.tier=t;$('#t-basis').setAttribute('aria-pressed',t==='basis');$('#t-komplett').setAttribute('aria-pressed',t==='komplett');
+  document.querySelectorAll('[data-p2]').forEach(el=>el.textContent=t==='basis'?'Komplett':'Phase 2');render()}
+$('#t-basis').onclick=()=>setTier('basis');$('#t-komplett').onclick=()=>setTier('komplett');
+function route(){const v=(location.hash||'#reception').slice(1);state.view=['reception','jobs','hub','insights'].includes(v)?v:'reception';render()}
+addEventListener('hashchange',route);
+
+function header(title, sub, phase){
+  return `<div class="top"><div><h1>${title}</h1><p class="sub">${sub}</p></div><div class="chips"><span class="pill navy">${phase}</span><span class="pill demo">Sample data</span></div></div>`;
+}
+function render(){
+  document.querySelectorAll('#nav a').forEach(a=>{if(a.dataset.v===state.view)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
+  const m=$('#main');
+  if((state.view==='hub'||state.view==='insights')&&state.tier==='basis'){m.innerHTML=locked();$('#unlock').onclick=()=>setTier('komplett');return}
+  ({reception:viewReception,jobs:viewJobs,hub:viewHub,insights:viewInsights})[state.view](m);
+}
+function locked(){
+  const what=state.view==='hub'?'The hub keeps every quote, invoice and receipt linked to the customer.':'Insights reads your bank account and the hub, and tells you in plain words where money is leaking.';
+  return `<div class="panel locked"><span class="pill navy">Komplett · €299/month</span><h2>${state.view==='hub'?'Hub':'Insights'} is part of Komplett</h2><p>${what} Basis covers the AI receptionist and the job inbox, which need no bank access.</p><button class="btn primary" id="unlock">Show Komplett</button></div>`;
+}
+
+/* ---------- reception ---------- */
+function viewReception(m){
+  const c=state.call;
+  const live=c.status==='live';
+  const btn=c.status==='idle'?'<button class="btn primary" id="answer">Let Werkbank answer</button>'
+    :live?'<span class="pill good">● On call</span>'
+    :c.added?'<button class="btn" id="reset">Play again</button>':'<button class="btn primary" id="add">Add to job inbox</button>';
+  m.innerHTML=header('AI receptionist','Thomas is on a roof in Harlaching. The phone rings. Werkbank answers, says it is an AI, asks for consent and turns the call into a job.','Phase 1 · Basis')+
+  `<div class="grid2">
+    <section class="panel ${live?'live':''}">
+      <div class="caller"><div class="ring"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg></div>
+        <div class="who"><b>Incoming call · +49 151 2384 0917</b><span>${c.status==='idle'?'Ringing for 4 rings · team is on site':live?'Werkbank AI is talking':'Call ended · 1 min 52 s'}</span></div>${btn}</div>
+      <div class="transcript" id="tr">${c.step===0?'<p class="empty">The transcript appears here in German, the way the customer speaks, with an English line underneath.</p>':script.slice(0,c.step).map(msg).join('')}</div>
+    </section>
+    <section class="panel">
+      <div class="ph"><h2>Job card</h2><span class="pill ${c.status==='done'?'good':''}">${c.status==='done'?'Ready':'Filling in…'}</span></div>
+      <dl class="fields" id="fields">${FIELDS.map(([k,l])=>`<div class="field" data-k="${k}"><dt>${l}</dt><dd class="${c.fields[k]?'':'wait'}">${c.fields[k]||'—'}</dd></div>`).join('')}</dl>
+      <div class="stats"><div><b class="num">23</b><span>calls answered this month while the team was busy</span></div><div><b class="num">9</b><span>became booked jobs</span></div><div><b class="num">€7,850</b><span>quoted from those calls</span></div></div>
+    </section>
+  </div>`;
+  const tr=$('#tr');tr.scrollTop=tr.scrollHeight;
+  $('#answer')&&($('#answer').onclick=playCall);
+  $('#add')&&($('#add').onclick=addCallJob);
+  $('#reset')&&($('#reset').onclick=()=>{state.call={status:'idle',step:0,fields:{},added:false};render()});
+}
+function msg(s){return `<div class="msg ${s.who}"><span class="who">${s.who==='ai'?'Werkbank AI':'Caller'}</span><span class="de">${s.de}</span><span class="en">${s.en}</span></div>`}
+function playCall(){
+  const c=state.call;c.status='live';c.step=0;c.fields={};render();
+  const tick=()=>{
+    if(state.call!==c)return;
+    const s=script[c.step];c.step++;
+    if(s.set)Object.assign(c.fields,s.set);
+    if(c.step>=script.length)c.status='done';
+    if(state.view==='reception'){render();if(s.set)Object.keys(s.set).forEach(k=>{const f=$(`.field[data-k="${k}"]`);f&&f.classList.add('just')})}
+    if(c.status==='live')c.timer=setTimeout(tick,RM?250:(s.who==='ai'?1700:1300));
+  };
+  c.timer=setTimeout(tick,RM?100:500);
+}
+function addCallJob(){
+  jobs.unshift({id:'J-1050',cust:'Katrin Maier',area:'Au',title:'Breaker trips: stove + washer',src:'Call',stage:2,value:null,date:'11 Nov'});
+  state.call.added=true;state.flashJob='J-1050';state.filter='all';toast('Job J-1050 added and booked for Thu 12 Nov');location.hash='#jobs';
+}
+
+/* ---------- jobs ---------- */
+function viewJobs(m){
+  const counts=STAGES.map((_,i)=>jobs.filter(j=>j.stage===i).length);
+  const srcs=['all','Call','Email','WhatsApp','Web form'];
+  m.innerHTML=header('Job inbox','Calls, emails, WhatsApp messages and web requests land in one list. Move a job along when something happens.','Phase 1 · Basis')+
+  `<div class="chips" style="margin-bottom:14px" role="group" aria-label="Filter by channel">${srcs.map(s=>`<button class="chip" data-f="${s}" aria-pressed="${state.filter===s}">${s==='all'?'All channels':s}</button>`).join('')}</div>
+  <div class="board">${STAGES.map((st,i)=>{
+    const list=jobs.filter(j=>j.stage===i&&(state.filter==='all'||j.src===state.filter));
+    return `<div class="col"><div class="colh"><b>${st}</b><span>${counts[i]}</span></div>${list.length?list.map(card).join(''):'<div class="colempty">Nothing here</div>'}</div>`}).join('')}</div>`;
+  m.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{state.filter=b.dataset.f;render()});
+  m.querySelectorAll('[data-adv]').forEach(b=>b.onclick=()=>{const j=jobs.find(x=>x.id===b.dataset.adv);j.stage++;state.flashJob=j.id;toast(`${j.id} moved to ${STAGES[j.stage]}`);render()});
+  if(state.flashJob){const el=$(`[data-id="${state.flashJob}"]`);el&&el.scrollIntoView({block:'nearest',inline:'nearest'});state.flashJob=null}
+}
+function card(j){
+  const next=j.stage<4?`<button class="btn sm" data-adv="${j.id}">→ ${STAGES[j.stage+1]}</button>`:'<span class="pill good">Paid</span>';
+  const overdue=j.stage===3?'<span class="pill bad">Overdue</span>':(j.stage===1&&/Oct/.test(j.date)?'<span class="pill warn">No reply</span>':'');
+  return `<article class="card ${state.flashJob===j.id?'new-flash':''}" data-id="${j.id}"><div class="row"><span class="src">${j.src}</span><span class="mono" style="font-size:11px;color:var(--muted)">${j.id}</span></div>
+  <div class="t">${j.title}</div><div class="c">${j.cust} · ${j.area} · ${j.date}</div>
+  <div class="row"><span class="num" style="font-weight:600">${j.value?eur(j.value):'Not quoted'}</span>${overdue}</div><div class="row">${next}</div></article>`;
+}
+
+/* ---------- hub ---------- */
+function viewHub(m){
+  const c=customers[state.customer];
+  m.innerHTML=header('Hub','Everything about a customer in one place: the call, the quote, the job, the receipts and the invoice.','Phase 2 · Komplett')+
+  `<div class="hub">
+    <section class="panel"><div class="ph"><h2>Customers</h2><span class="pill">${Object.keys(customers).length}</span></div>
+      <div class="clist">${Object.entries(customers).map(([k,v])=>`<button data-c="${k}" aria-current="${k===state.customer}"><b>${v.name}</b><small>${v.meta.split(' · ')[0]} · ${v.docs.length} documents</small></button>`).join('')}</div></section>
+    <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+      <section class="panel"><div class="ph"><div><h2>${c.name}</h2><div class="note">${c.meta}</div></div><span class="pill ${c.tone}">${c.pay}</span></div>
+        <div class="pb"><ul class="timeline">${c.docs.map(d=>`<li><span class="d">${d[0]}</span><span class="dot"></span><div><div class="k">${d[1]}</div><div class="x">${d[2]}</div></div><span class="amt num" style="color:var(--muted);font-size:13px;text-align:right">${d[3]}</span></li>`).join('')}</ul></div></section>
+      <section class="panel"><div class="ph"><h2>Read a receipt</h2><span class="note">Photo from the van, AI reads it</span></div>
+        <div class="pb"><label class="drop" id="drop" for="file">
+          ${state.receipt?`<img class="thumb" src="${state.receipt.img}" alt="Receipt photo">`:'<div class="thumb" aria-hidden="true"></div>'}
+          <div style="flex:1;min-width:200px">${state.receipt?(state.receipt.reading?'<p class="note">Reading the receipt…</p>':ocr()):'<p style="margin:0 0 8px">Drop a photo of a receipt here, or choose one.</p>'}
+          <div class="a" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><span class="btn sm">Choose photo</span><button type="button" class="btn sm" id="sample">Use a sample receipt</button></div></div>
+        </label><input type="file" id="file" accept="image/*" hidden></div></section>
+    </div></div>`;
+  m.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{state.customer=b.dataset.c;render()});
+  $('#file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>readReceipt(r.result);r.readAsDataURL(f)};
+  $('#sample').onclick=e=>{e.preventDefault();readReceipt(sampleReceipt())};
+  const d=$('#drop');
+  d.ondragover=e=>{e.preventDefault();d.classList.add('over')};d.ondragleave=()=>d.classList.remove('over');
+  d.ondrop=e=>{e.preventDefault();d.classList.remove('over');const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/')){const r=new FileReader();r.onload=()=>readReceipt(r.result);r.readAsDataURL(f)}};
+  $('#assign')&&($('#assign').onclick=e=>{e.preventDefault();customers.wimmer.docs.push(['11 Nov','Receipt','Sonepar · RCD 40A, B16 breakers, NYM-J cable','€148.90']);state.receipt=null;state.customer='wimmer';toast('Receipt filed under Bäckerei Wimmer, job J-1047');render()});
+}
+function readReceipt(img){state.receipt={img,reading:true};render();setTimeout(()=>{state.receipt.reading=false;state.view==='hub'&&render()},RM?200:1400)}
+function ocr(){return `<dl class="ocr"><dt>Supplier</dt><dd>Sonepar Deutschland, München-Ost</dd><dt>Date</dt><dd>11 Nov 2026</dd><dt>Items</dt><dd>RCD 40A/30mA · 4× B16 breaker · NYM-J 3×1.5, 50 m</dd><dt>Total</dt><dd class="num">€148.90 incl. 19% VAT (€23.77)</dd><dt>Matched to</dt><dd>J-1047 · Bäckerei Wimmer (same parts as the quote)</dd></dl>
+  <p class="note" style="margin:8px 0 0">Prototype: the fields above are fixed sample output.</p>
+  <div style="margin-top:8px"><button type="button" class="btn sm primary" id="assign">File under J-1047</button></div>`}
+function sampleReceipt(){
+  const c=document.createElement('canvas');c.width=168;c.height=208;const x=c.getContext('2d');
+  x.fillStyle='#fffdf8';x.fillRect(0,0,168,208);x.fillStyle='#1e3a5f';x.font='bold 13px monospace';x.fillText('SONEPAR',12,22);
+  x.fillStyle='#555';x.font='9px monospace';['München-Ost','11.11.2026  09:14','','FI 40A/30mA    61,20','LS B16 x4      38,40','NYM-J 3x1,5    25,53','','Netto         125,13','MwSt 19%       23,77'].forEach((l,i)=>x.fillText(l,12,42+i*13));
+  x.fillStyle='#111';x.font='bold 11px monospace';x.fillText('SUMME EUR    148,90',12,178);
+  return c.toDataURL('image/png');
+}
+
+/* ---------- insights ---------- */
+const months=['Jun','Jul','Aug','Sep','Oct','Nov'];
+const rev=[38.2,41.5,36.8,44.1,42.7,39.9], mat=[11.0,12.1,10.9,13.6,14.2,12.3];
+const advice=[
+  {id:'overdue',tone:'bad',h:'3 invoices are overdue: €4,200 in total.',p:'Hausverwaltung Isar (€1,850, 38 days), WEG Ungererstraße 40 (€1,430, 21 days) and Café Lindwurm (€920, 16 days). That is about a week of wages for two people.',a:'Send friendly reminders',done:'Reminders sent by email on 11 Nov. Werkbank will check the bank account daily.'},
+  {id:'material',tone:'warn',h:'Material costs are up 18% on the last quarter. Revenue grew only 9%.',p:'Sep–Nov you spent €40,100 on material, against €34,000 in Jun–Aug. Most of the increase is cable and breakers from one supplier. Your quotes still use spring prices.',a:'Update quote prices',done:'Quote template updated: material markup now 22% (was 15%).'},
+  {id:'isar',tone:'warn',h:'Hausverwaltung Isar pays in 45 days on average. Your terms are 14.',p:'They are a good customer by volume (€6,900 this year), but they pay last every time. A 30% deposit on the next job would cover the material up front.',a:'Add deposit to next quote',done:'Next quote for Hausverwaltung Isar will ask for a 30% deposit.'},
+  {id:'quotes',tone:'info',h:'2 quotes worth €6,300 have had no reply for almost two weeks.',p:'Familie Schneider (meter cabinet, €3,400) and Dr. Anna Berger (wallbox, €2,900). Customers who get a follow-up call in week two accept more often.',a:'Let the receptionist call them',done:'Follow-up calls scheduled for Thu 12 Nov, 17:00–18:00.'},
+];
+function viewInsights(m){
+  const sum=a=>a.reduce((s,v)=>s+v,0);
+  const r2=sum(rev.slice(3)),r1=sum(rev.slice(0,3)),m2=sum(mat.slice(3)),m1=sum(mat.slice(0,3));
+  const open=advice.filter(a=>!state.doneAdvice.has(a.id)).length;
+  const overdue=state.doneAdvice.has('overdue')?'Reminders sent':'3 invoices, oldest 38 days';
+  m.innerHTML=header('Insights','Werkbank reads the business bank account and the hub every night, and tells you where money is leaking. Advice first, charts second.','Phase 2 · Komplett')+
+  `<div class="kpis">
+    <div class="kpi"><span class="lbl">Revenue · Sep–Nov</span><div class="v num">${eur(r2*1000)}</div><div class="d up-good">+${((r2/r1-1)*100).toFixed(1)}% on Jun–Aug</div></div>
+    <div class="kpi"><span class="lbl">Material · Sep–Nov</span><div class="v num">${eur(m2*1000)}</div><div class="d up-bad">+${((m2/m1-1)*100).toFixed(0)}% on Jun–Aug</div></div>
+    <div class="kpi"><span class="lbl">Overdue invoices</span><div class="v num">€4,200</div><div class="d ${state.doneAdvice.has('overdue')?'up-good':'up-bad'}">${overdue}</div></div>
+    <div class="kpi"><span class="lbl">Days to get paid</span><div class="v num">23</div><div class="d" style="color:var(--muted)">Average · terms are 14</div></div>
+  </div>
+  <div class="grid2">
+    <section class="panel"><div class="ph"><h2>What Werkbank recommends</h2><span class="pill ${open?'warn':'good'}">${open?open+' open':'All done'}</span></div>
+      <div class="advice">${advice.map(a=>{const d=state.doneAdvice.has(a.id);return `<div class="adv ${d?'done':a.tone}"><span class="s"></span><div class="b"><h3>${a.h}</h3><p>${d?a.done:a.p}</p><div class="a">${d?'<span class="pill good">Done</span>':`<button class="btn sm primary" data-do="${a.id}">${a.a}</button>`}</div></div></div>`}).join('')}</div>
+      <form class="ask" id="ask"><label for="q" class="lbl" style="align-self:center">Ask</label><input id="q" placeholder="e.g. Which customer is worth the most?" autocomplete="off"><button class="btn sm">Ask</button></form>
+      <div class="answer" id="ans"></div>
+    </section>
+    <section class="panel chart"><div class="ph"><h2>Revenue and material, monthly</h2><span class="note">€ thousand</span></div>
+      <div class="pb"><div class="legend" style="margin-bottom:8px"><span><i style="background:var(--navy)"></i>Revenue</span><span><i style="background:var(--brass)"></i>Material costs</span></div>${chart()}
+      <p class="note" style="margin:10px 0 0">Material share of revenue: ${(m1/r1*100).toFixed(0)}% in Jun–Aug, ${(m2/r2*100).toFixed(0)}% in Sep–Nov.</p></div></section>
+  </div>`;
+  m.querySelectorAll('[data-do]').forEach(b=>b.onclick=()=>{state.doneAdvice.add(b.dataset.do);toast('Done. Werkbank will keep an eye on it.');render()});
+  $('#ask').onsubmit=e=>{e.preventDefault();$('#ans').textContent=answer($('#q').value)};
+}
+function answer(q){
+  q=q.toLowerCase();
+  if(/worth|best|biggest|most/.test(q))return 'By revenue this year: Hausverwaltung Isar (€6,900), Familie Schneider (€4,040 incl. the open quote) and Bäckerei Wimmer (€3,150). Isar is the biggest, but also the slowest payer.';
+  if(/late|overdue|owe|pay/.test(q))return 'Three invoices are overdue, €4,200 in total. The oldest is Hausverwaltung Isar, 38 days past due.';
+  if(/material|cost|supplier|price/.test(q))return 'Material costs rose 18% quarter on quarter, mostly cable and breakers from Sonepar. Your quote template still uses spring prices.';
+  if(/call|phone|reception/.test(q))return 'The receptionist answered 23 calls this month while the team was busy. 9 became booked jobs worth €7,850 in quotes.';
+  return 'In this prototype, try asking about overdue invoices, material costs, calls, or which customer is worth the most.';
+}
+function chart(){
+  const W=520,H=250,L=36,R=10,T=10,B=28,max=50,ih=H-T-B,iw=W-L-R,g=iw/months.length,bw=g*0.38;
+  const y=v=>T+ih-(v/max)*ih;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Monthly revenue and material costs, June to November 2026">`;
+  for(let v=0;v<=max;v+=10)s+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="IBM Plex Mono,monospace">${v}</text>`;
+  months.forEach((mo,i)=>{const cx=L+g*i+g/2;
+    s+=`<rect x="${cx-bw-1}" y="${y(rev[i])}" width="${bw}" height="${y(0)-y(rev[i])}" rx="2" fill="var(--navy)"><title>${mo}: revenue €${rev[i]}k</title></rect>`;
+    s+=`<rect x="${cx+1}" y="${y(mat[i])}" width="${bw}" height="${y(0)-y(mat[i])}" rx="2" fill="var(--brass)"><title>${mo}: material €${mat[i]}k</title></rect>`;
+    s+=`<text x="${cx}" y="${H-8}" text-anchor="middle" font-size="11.5" fill="var(--muted)">${mo}</text>`;});
+  s+=`<line x1="${L+g*3}" x2="${L+g*3}" y1="${T}" y2="${y(0)}" stroke="var(--muted)" stroke-dasharray="3 3" stroke-width="1"/><text x="${L+g*3+5}" y="${T+10}" font-size="10.5" fill="var(--muted)">this quarter</text>`;
+  return s+'</svg>';
+}
+
+route();
+</script>
